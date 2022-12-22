@@ -167,15 +167,11 @@ func (c *Create) Start() error {
 
 	go func() {
 		var tx *bbolt.Tx
-		var ptx *bbolt.Bucket
-		var pitx *bbolt.Bucket
 		tx, err = db.Begin(true)
 		if err != nil {
 			global.LOG.Error("SaveProduct", zap.Error(err))
 			return
 		}
-		ptx = tx.Bucket(models.BProduct)
-		pitx = tx.Bucket(models.BProductInfo)
 		index := 0
 		for bs := range c.S {
 			if index >= 10000 {
@@ -185,13 +181,11 @@ func (c *Create) Start() error {
 				if err != nil {
 					global.LOG.Error("SaveProduct", zap.Error(err))
 				}
-				ptx = tx.Bucket(models.BProduct)
-				pitx = tx.Bucket(models.BProductInfo)
 			}
-			if err = ptx.Put(bs[0], bs[1]); err != nil {
+			if err = tx.Bucket(models.BProduct).Put(bs[0], bs[1]); err != nil {
 				global.LOG.Error("SaveProduct", zap.Error(err))
 			}
-			if err = pitx.Put(bs[0], bs[2]); err != nil {
+			if err = tx.Bucket(models.BProductInfo).Put(bs[0], bs[2]); err != nil {
 				global.LOG.Error("SaveProductInfo", zap.Error(err))
 			}
 			index++
@@ -408,6 +402,7 @@ var NameReg = regexp.MustCompile(`(^((★|❤️|❤|☆|『|【|「|\(|✨|★|
 var NameReg2 = regexp.MustCompile(`(★|❤️|❤|☆|✨|★|■|❣|♥|●|\d+$)`)
 
 func (c *Create) handleOneRow(domain []byte, line []byte) error {
+
 	domainId, err := c.getDomainId(string(domain))
 	if err != nil {
 		return err
@@ -427,7 +422,6 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 		base64.StdEncoding.Decode(d, i2)
 		arr[i] = string(bytes.Trim(d, "\x00"))
 	}
-
 	arr[4] = strings.ReplaceAll(arr[4], ",http", "|||http")
 	arr[4] = strings.ReplaceAll(arr[4], ",//", "|||//")
 	// /分类:1,分类2:2|cPath|产品ID|产品型号|产品图片^产品图片2|产品价格|优惠价格|产品名称|产品详情|标题|关键词|描述|
@@ -481,6 +475,7 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 	}
 	pi.Description = strings.ReplaceAll(pi.Description, "<h2>商品の情報</h2>", "")
 	pi.Description = strings.ReplaceAll(pi.Description, "<h2>商品情報</h2>", "")
+	pi.Description = strings.ReplaceAll(pi.Description, "<h2 class=\"Heading Heading-f\">商品情報</h2>", "")
 
 	pppp := ""
 	ttti := strings.Index(pi.Description, "<table border=\"1\">")
@@ -565,6 +560,7 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 	}
 
 	if err != nil {
+		fmt.Println(err, "---")
 		return err
 	}
 	//c.db.Save(p)
@@ -572,26 +568,26 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 	return c.SaveProduct(p, pi)
 }
 
-func HandleName() {
-	// 送料無料
-}
-
 func (c *Create) SaveProduct(p *models.Product, pi *models.ProductInfo) error {
-	b, err := proto.Marshal(p)
+	var (
+		b   []byte
+		b2  []byte
+		err error
+	)
+
 	//b, err := json.Marshal(p)
-	if err != nil {
+	if b, err = proto.Marshal(p); err != nil {
 		global.LOG.Error("protobuf.Codec Product", zap.Error(err), zap.Any("id", p.ID))
 		return err
 	}
-	b2, err := proto.Marshal(pi)
-	//b, err := json.Marshal(p)
-	if err != nil {
+	if b2, err = proto.Marshal(pi); err != nil {
 		global.LOG.Error("protobuf.Codec ProductInfo", zap.Error(err), zap.Any("id", p.ID))
 		return err
 	}
 
 	c.S <- [3][]byte{utils.Itob(p.ID), b, b2}
 	p = nil
+	pi = nil
 	return nil
 }
 

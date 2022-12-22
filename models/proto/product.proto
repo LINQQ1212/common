@@ -37,7 +37,7 @@ message Product {
   uint64   DomainID = 5;
   string Brand = 6;
   repeated string Keywords = 7;
-  string Link = 10; // @gotags: protobuf:"-" json:"-" storm:"-"
+  string Link = 10;
 }
 
 
@@ -55,5 +55,5 @@ message ProductInfo {
   repeated YahooDsc YahooDesc = 11;
   repeated YahooDsc BingDesc = 12;
   repeated GImg Youtube = 13;
-  repeated string Categories = 14; // @gotags: protobuf:"-" json:"-" storm:"-"
+  repeated string Categories = 14;
 }

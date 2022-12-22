@@ -234,7 +234,7 @@ type Product struct {
 	DomainID uint64   `protobuf:"varint,5,opt,name=DomainID,proto3" json:"DomainID,omitempty"`
 	Brand    string   `protobuf:"bytes,6,opt,name=Brand,proto3" json:"Brand,omitempty"`
 	Keywords []string `protobuf:"bytes,7,rep,name=Keywords,proto3" json:"Keywords,omitempty"`
-	Link     string   `protobuf:"-" json:"-" storm:"-"` // @gotags: protobuf:"-" json:"-" storm:"-"
+	Link     string   `protobuf:"bytes,10,opt,name=Link,proto3" json:"Link,omitempty"`
 }
 
 func (x *Product) Reset() {
@@ -343,7 +343,7 @@ type ProductInfo struct {
 	YahooDesc    []*YahooDsc `protobuf:"bytes,11,rep,name=YahooDesc,proto3" json:"YahooDesc,omitempty"`
 	BingDesc     []*YahooDsc `protobuf:"bytes,12,rep,name=BingDesc,proto3" json:"BingDesc,omitempty"`
 	Youtube      []*GImg     `protobuf:"bytes,13,rep,name=Youtube,proto3" json:"Youtube,omitempty"`
-	Categories   []string    `protobuf:"-" json:"-" storm:"-"` // @gotags: protobuf:"-" json:"-" storm:"-"
+	Categories   []string    `protobuf:"bytes,14,rep,name=Categories,proto3" json:"Categories,omitempty"`
 }
 
 func (x *ProductInfo) Reset() {
