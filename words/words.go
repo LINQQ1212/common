@@ -73,3 +73,17 @@ func (w *Words) GetByTimeWeek(id uint64) string {
 	_, Week := time.Now().ISOWeek()
 	return w.list[(int(id)+Week)%w.count]
 }
+
+func (w *Words) GetName(pid uint64, index int, num int) string {
+	if num > 1000 {
+		num = num + index
+	}
+	id := (pid % uint64(num)) * uint64(index)
+	if id >= uint64(w.count) {
+		id = id - uint64(w.count)
+	}
+	if id < 0 {
+		id = 0
+	}
+	return w.list[id]
+}
