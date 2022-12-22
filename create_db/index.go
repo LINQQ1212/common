@@ -42,7 +42,7 @@ func New(req models.NewVersionReq) *Create {
 		Info:       req,
 		domainInfo: &sync.Map{},
 		CC:         make(chan [2][]byte, 30),
-		S:          make(chan [3][]byte, 100),
+		S:          make(chan [3][]byte, 30),
 		done:       make(chan struct{}, 1),
 		wg:         &sync.WaitGroup{},
 		cateInfo:   &sync.Map{},
@@ -114,7 +114,7 @@ func (c *Create) Start() error {
 		c.conn2 = pb.NewGreeterClient(conn)
 	}
 	//c.txn = global.IMGDB.NewTransaction(true)
-
+	global.LOG.Info(c.Info.Domain + " start")
 	if c.Info.GoogleImg != "" {
 		var err error
 		c.googleImgZip, err = zip.OpenReader(c.Info.GoogleImg)
@@ -188,13 +188,11 @@ func (c *Create) Start() error {
 				ptx = tx.Bucket(models.BProduct)
 				pitx = tx.Bucket(models.BProductInfo)
 			}
-			err = ptx.Put(bs[0], bs[1])
-			if err != nil {
+			if err = ptx.Put(bs[0], bs[1]); err != nil {
 				global.LOG.Error("SaveProduct", zap.Error(err))
 			}
-			err = pitx.Put(bs[0], bs[2])
-			if err != nil {
-				global.LOG.Error("SaveProduct", zap.Error(err))
+			if err = pitx.Put(bs[0], bs[2]); err != nil {
+				global.LOG.Error("SaveProductInfo", zap.Error(err))
 			}
 			index++
 		}
@@ -279,7 +277,7 @@ func (c *Create) Start() error {
 	if err != nil {
 		return err
 	}
-
+	global.LOG.Info(c.Info.Domain + " end")
 	runtime.GC()
 	return os.Rename(path.Join(global.VersionDir, "~"+c.Info.Domain+".db"), path.Join(global.VersionDir, c.Info.Domain+".db"))
 }
