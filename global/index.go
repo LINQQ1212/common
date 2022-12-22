@@ -49,7 +49,8 @@ var (
 	Words *words.Words
 	// EnWords 英语单词
 	EnWords *words.Words
-
+	// Names  人名
+	Names *words.Words
 	//Review *review.Review
 
 	Minify *minify.M
