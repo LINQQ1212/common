@@ -1,0 +1,57 @@
+syntax = "proto3";
+import public "google/protobuf/timestamp.proto";
+package models;
+option go_package = "../models";
+
+message GImg {
+  string link = 1;
+  string title = 2;
+  string des = 3;
+}
+
+message YahooDsc {
+  string title = 1;
+  string des = 2;
+}
+
+
+
+message VersionInfo{
+  google.protobuf.Timestamp CreateAt=1;
+  string    Name = 2;
+  string    FileName = 3;
+  uint64 Count = 4;
+  bool    DownPic  =5;
+}
+/*
+ map<uint64,Cate> Cates = 6; // @gotags: protobuf:"-" json:"-" storm:"-"
+  repeated Cate Categories = 7; // @gotags: protobuf:"-" json:"-" storm:"-"
+*/
+
+
+message Product {
+  uint64   ID = 1; // @gotags: storm:"id,increment"
+  uint64   CateId = 2; // @gotags: storm:"index"
+  uint64   DomainID = 3;
+  string   Pid = 4;
+  string   Model = 5;
+  string   Image = 6;
+  repeated string Images = 7;
+  string   Price = 8;
+  string   Specials = 9;
+  string   Name = 10;
+  string   Description = 11;
+  string   MTitle = 12;
+  string   MKeywords = 13;
+  string   MDescription = 14;
+  string   Link = 15;
+  repeated string   Keywords = 16;
+  string   CPath = 17;
+  repeated GImg GoogleImgs = 18;
+  repeated YahooDsc YahooDesc = 19;
+  repeated string Categories = 20;
+  string Brand = 21;
+  repeated YahooDsc BingDesc = 22;
+  repeated GImg Youtube = 23;
+
+}
