@@ -32,26 +32,28 @@ message VersionInfo{
 message Product {
   uint64   ID = 1; // @gotags: storm:"id,increment"
   uint64   CateId = 2; // @gotags: storm:"index"
-  uint64   DomainID = 3;
-  string   Pid = 4;
-  string   Model = 5;
-  string   Image = 6;
-  repeated string Images = 7;
-  string   Price = 8;
-  string   Specials = 9;
-  string   Name = 10;
-  string   Description = 11;
-  string   MTitle = 12;
-  string   MKeywords = 13;
-  string   MDescription = 14;
-  string   Link = 15;
-  repeated string   Keywords = 16;
-  string   CPath = 17;
-  repeated GImg GoogleImgs = 18;
-  repeated YahooDsc YahooDesc = 19;
-  repeated string Categories = 20;
-  string Brand = 21;
-  repeated YahooDsc BingDesc = 22;
-  repeated GImg Youtube = 23;
+  string   Name = 3;
+  string   Image = 4;
+  uint64   DomainID = 5;
+  string Brand = 6;
+  repeated string   Keywords = 7;
+}
 
+
+message ProductInfo {
+  string   Pid = 1;
+  string   Model = 2;
+  repeated string Images = 3;
+  string   Price = 4;
+  string   Specials = 5;
+  string   Description = 6;
+  string   MTitle = 7;
+  string   MKeywords = 8;
+  string   MDescription = 9;
+  string   Link = 10;
+  repeated GImg GoogleImgs = 11;
+  repeated YahooDsc YahooDesc = 12;
+  repeated YahooDsc BingDesc = 14;
+  repeated GImg Youtube = 15;
+  repeated string Categories = 13;
 }

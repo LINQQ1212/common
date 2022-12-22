@@ -13,6 +13,7 @@ var (
 	BCateProducts = []byte("CateProducts")
 	BDomain       = []byte("Domain")
 	BProduct      = []byte("Product")
+	BProductInfo  = []byte("ProductInfo")
 	BInfo         = []byte("Info")
 )
 

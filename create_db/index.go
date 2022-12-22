@@ -42,7 +42,7 @@ func New(req models.NewVersionReq) *Create {
 		Info:       req,
 		domainInfo: &sync.Map{},
 		CC:         make(chan [2][]byte, 30),
-		S:          make(chan [2][]byte, 30),
+		S:          make(chan [3][]byte, 100),
 		done:       make(chan struct{}, 1),
 		wg:         &sync.WaitGroup{},
 		cateInfo:   &sync.Map{},
@@ -70,7 +70,7 @@ type Create struct {
 	bingDscZip    *zip.ReadCloser
 	youtobeDscZip *zip.ReadCloser
 	CC            chan [2][]byte
-	S             chan [2][]byte
+	S             chan [3][]byte
 	done          chan struct{}
 }
 
@@ -89,6 +89,10 @@ func (c *Create) CreateBucketIfNotExists(db *bbolt.DB) error {
 			return err
 		}
 		_, err = tx.CreateBucketIfNotExists(models.BProduct)
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucketIfNotExists(models.BProductInfo)
 		if err != nil {
 			return err
 		}
@@ -164,12 +168,14 @@ func (c *Create) Start() error {
 	go func() {
 		var tx *bbolt.Tx
 		var ptx *bbolt.Bucket
+		var pitx *bbolt.Bucket
 		tx, err = db.Begin(true)
 		if err != nil {
 			global.LOG.Error("SaveProduct", zap.Error(err))
 			return
 		}
 		ptx = tx.Bucket(models.BProduct)
+		pitx = tx.Bucket(models.BProductInfo)
 		index := 0
 		for bs := range c.S {
 			if index >= 10000 {
@@ -180,8 +186,13 @@ func (c *Create) Start() error {
 					global.LOG.Error("SaveProduct", zap.Error(err))
 				}
 				ptx = tx.Bucket(models.BProduct)
+				pitx = tx.Bucket(models.BProductInfo)
 			}
 			err = ptx.Put(bs[0], bs[1])
+			if err != nil {
+				global.LOG.Error("SaveProduct", zap.Error(err))
+			}
+			err = pitx.Put(bs[0], bs[2])
 			if err != nil {
 				global.LOG.Error("SaveProduct", zap.Error(err))
 			}
@@ -443,46 +454,54 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 	}*/
 
 	p := &models.Product{
-		ID:           atomic.AddUint64(&c.pId, 1),
-		DomainID:     domainId,
-		CPath:        arr[1],
+		ID:       atomic.AddUint64(&c.pId, 1),
+		DomainID: domainId,
+		Image:    mainImg,
+		Name:     arr[7],
+	}
+	pi := &models.ProductInfo{
 		Pid:          arr[2], //
 		Model:        arr[3],
-		Image:        mainImg,
 		Images:       imgArr,
 		Price:        arr[5],
 		Specials:     arr[6],
-		Name:         arr[7],
 		Description:  arr[8],
 		MTitle:       arr[9],
 		MKeywords:    arr[10],
 		MDescription: arr[11],
 	}
+
 	p.Name = strings.TrimSpace(NameReg.ReplaceAllString(p.Name, ""))
 	p.Name = strings.TrimSpace(NameReg2.ReplaceAllString(p.Name, " "))
 	p.Name = strings.TrimSpace(strings.ReplaceAll(p.Name, "　", " "))
 	p.Name = strings.TrimSpace(strings.ReplaceAll(p.Name, "【送料無料】", ""))
 	p.Name = strings.TrimSpace(strings.ReplaceAll(p.Name, "送料無料", ""))
 
-	brandArr := brandReg.FindStringSubmatch(p.Description)
+	brandArr := brandReg.FindStringSubmatch(pi.Description)
 	if len(brandArr) > 1 {
 		p.Brand = brandArr[1]
 	}
-	p.Description = strings.ReplaceAll(p.Description, "<h2>商品の情報</h2>", "")
-	p.Description = strings.ReplaceAll(p.Description, "<h2>商品情報</h2>", "")
+	pi.Description = strings.ReplaceAll(pi.Description, "<h2>商品の情報</h2>", "")
+	pi.Description = strings.ReplaceAll(pi.Description, "<h2>商品情報</h2>", "")
 
 	pppp := ""
-	ttti := strings.Index(p.Description, "<table border=\"1\">")
+	ttti := strings.Index(pi.Description, "<table border=\"1\">")
 	if ttti > 0 {
-		p.Description = p.Description[0:ttti]
-		pppp = htmlReg.ReplaceAllString(p.Description, " ")
+		pi.Description = pi.Description[0:ttti]
+		pppp = htmlReg.ReplaceAllString(pi.Description, " ")
 	}
 
-	p.Description = strings.Replace(p.Description, "<style>table th{border: 1px solid #ccc !important;}</style>", "", 1)
-	p.Description = strings.TrimSuffix(p.Description, "</p>")
-	p.Description = strings.TrimPrefix(p.Description, "<p>")
+	pi.Description = strings.Replace(pi.Description, "<style>table th{border: 1px solid #ccc !important;}</style>", "", 1)
+	pi.Description = strings.TrimSuffix(pi.Description, "</p>")
+	pi.Description = strings.TrimPrefix(pi.Description, "<p>")
 
-	p.Keywords = GetKeys(p.Name + " " + p.MDescription + " " + pppp)
+	arrkws := GetKeys(p.Name + " " + pi.MDescription + " " + pppp)
+
+	for _, arrkw := range arrkws {
+		if len(arrkw) < 12 {
+			p.Keywords = append(p.Keywords, arrkw)
+		}
+	}
 	cate, err := c.getCateId(strings.TrimSpace(arr[0]), domainId)
 	if err == nil {
 		p.CateId = cate.ID
@@ -494,29 +513,29 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 		cateArr2 := strings.Split(cateArr[i], ":")
 		p.Categories = append(p.Categories, strings.TrimSpace(cateArr2[0]))
 	}*/
-	domainStr := string(domain)
+	fname := string(domain) + "/" + pi.Pid + ".json"
 	if c.Info.GoogleImg != "" {
-		if fp, err := c.googleImgZip.Open(domainStr + "/" + p.Pid + ".json"); err == nil {
+		if fp, err := c.googleImgZip.Open(fname); err == nil {
 			if b, err := io.ReadAll(fp); err == nil {
-				json.Unmarshal(b, &p.GoogleImgs)
-				p.GoogleImgs = lo.Shuffle(p.GoogleImgs)
+				json.Unmarshal(b, &pi.GoogleImgs)
+				pi.GoogleImgs = lo.Shuffle(pi.GoogleImgs)
 			}
 			fp.Close()
 		}
 	}
 
 	if c.Info.YoutubeDsc != "" {
-		if fp, err := c.youtobeDscZip.Open(domainStr + "/" + p.Pid + ".json"); err == nil {
+		if fp, err := c.youtobeDscZip.Open(fname); err == nil {
 			if b, err := io.ReadAll(fp); err == nil {
-				json.Unmarshal(b, &p.Youtube)
-				p.Youtube = lo.Shuffle(p.Youtube)
+				json.Unmarshal(b, &pi.Youtube)
+				pi.Youtube = lo.Shuffle(pi.Youtube)
 			}
 			fp.Close()
 		}
 	}
 
 	if c.Info.YahooDsc != "" {
-		if fp, err := c.yahooDscZip.Open(domainStr + "/" + p.Pid + ".json"); err == nil {
+		if fp, err := c.yahooDscZip.Open(fname); err == nil {
 			if b, err := io.ReadAll(fp); err == nil {
 				var arr3 []models.YahooDsc
 				err = json.Unmarshal(b, &arr3)
@@ -524,10 +543,10 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 				if err == nil && arr3l > 0 {
 					for i := 0; i < arr3l; i++ {
 						if arr3[i].Des != "" || arr3[i].Title != "" {
-							p.YahooDesc = append(p.YahooDesc, &arr3[i])
+							pi.YahooDesc = append(pi.YahooDesc, &arr3[i])
 						}
 					}
-					p.YahooDesc = lo.Shuffle(p.YahooDesc)
+					pi.YahooDesc = lo.Shuffle(pi.YahooDesc)
 				}
 			}
 			fp.Close()
@@ -535,12 +554,12 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 	}
 
 	if c.Info.BingDsc != "" {
-		if fp, err := c.bingDscZip.Open(domainStr + "/" + p.Pid + ".json"); err == nil {
+		if fp, err := c.bingDscZip.Open(fname); err == nil {
 			if b, err := io.ReadAll(fp); err == nil {
 				var arr3 []*models.YahooDsc
 				err = json.Unmarshal(b, &arr3)
 				if err == nil {
-					p.BingDesc = lo.Shuffle(arr3)
+					pi.BingDesc = lo.Shuffle(arr3)
 				}
 			}
 			fp.Close()
@@ -552,21 +571,28 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 	}
 	//c.db.Save(p)
 	//c.S <- p
-	return c.SaveProduct(p)
+	return c.SaveProduct(p, pi)
 }
 
 func HandleName() {
 	// 送料無料
 }
 
-func (c *Create) SaveProduct(p *models.Product) error {
+func (c *Create) SaveProduct(p *models.Product, pi *models.ProductInfo) error {
 	b, err := proto.Marshal(p)
 	//b, err := json.Marshal(p)
 	if err != nil {
-		global.LOG.Error("protobuf.Codec", zap.Error(err), zap.Any("id", p.ID))
+		global.LOG.Error("protobuf.Codec Product", zap.Error(err), zap.Any("id", p.ID))
 		return err
 	}
-	c.S <- [2][]byte{utils.Itob(p.ID), b}
+	b2, err := proto.Marshal(pi)
+	//b, err := json.Marshal(p)
+	if err != nil {
+		global.LOG.Error("protobuf.Codec ProductInfo", zap.Error(err), zap.Any("id", p.ID))
+		return err
+	}
+
+	c.S <- [3][]byte{utils.Itob(p.ID), b, b2}
 	p = nil
 	return nil
 }
