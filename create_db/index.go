@@ -487,6 +487,7 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 	pi.Description = strings.Replace(pi.Description, "<style>table th{border: 1px solid #ccc !important;}</style>", "", 1)
 	pi.Description = strings.TrimSuffix(pi.Description, "</p>")
 	pi.Description = strings.TrimPrefix(pi.Description, "<p>")
+	pi.Description = htmlReg.ReplaceAllString(pi.Description, "")
 
 	arrkws := GetKeys(p.Name + " " + pi.MDescription + " " + pppp)
 

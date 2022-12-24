@@ -8,6 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func Admin(c *gin.Context) {
+	c.Writer.Write(html)
+}
+
 func Login(c *gin.Context) {
 	var l models.Login
 	_ = c.ShouldBindJSON(&l)
