@@ -21,6 +21,7 @@ func InitRouter(r *gin.Engine) {
 		a.GET("/", apis.Admin)
 		a.GET("/new-version", apis.Admin)
 		a.GET("/new-domain", apis.Admin)
+		a.GET("/login", apis.Admin)
 	}
 	r.NoRoute(func(c *gin.Context) {
 		c.Writer.WriteString("404")
