@@ -208,6 +208,7 @@ func (c *Create) Start() error {
 	defer f.Close()
 	gr, err := gzip.NewReader(f)
 	if err != nil {
+		global.LOG.Error("gzip.NewReader", zap.Error(err))
 		return err
 	}
 	defer gr.Close()
@@ -281,7 +282,8 @@ func (c *Create) Start() error {
 	}
 	global.LOG.Info(c.Info.Domain + " end")
 	runtime.GC()
-	return os.Rename(path.Join(global.VersionDir, "~"+c.Info.Domain+".db"), path.Join(global.VersionDir, c.Info.Domain+".db"))
+	os.Rename(path.Join(global.VersionDir, "~"+c.Info.Domain+".db"), path.Join(global.VersionDir, c.Info.Domain+".db"))
+	return nil
 }
 
 func (c *Create) GetDomain() string {
