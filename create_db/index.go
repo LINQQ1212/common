@@ -243,8 +243,10 @@ func (c *Create) Start() error {
 		Count:    c.pId,
 		DownPic:  c.Info.DownMainPic,
 	}
+
 	c.db, err = db.Begin(true)
 	if err != nil {
+		global.LOG.Error("Begin", zap.Error(err))
 		return err
 	}
 	vb, err := proto.Marshal(&vinfo)
