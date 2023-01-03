@@ -249,26 +249,32 @@ func (c *Create) Start() error {
 	}
 	vb, err := proto.Marshal(&vinfo)
 	if err != nil {
+		global.LOG.Error("vinfo", zap.Error(err))
 		return err
 	}
 	err = c.db.Bucket(models.BInfo).Put(models.BInfo, vb)
 	if err != nil {
+		global.LOG.Error("BInfo", zap.Error(err))
 		return err
 	}
 	err = c.db.Bucket(models.BCate).Put(models.BCate, c.GetCateByte())
 	if err != nil {
+		global.LOG.Error("BCate", zap.Error(err))
 		return err
 	}
 	err = c.db.Bucket(models.BDomain).Put(models.BDomain, c.GetDomainByte())
 	if err != nil {
+		global.LOG.Error("BDomain", zap.Error(err))
 		return err
 	}
 	err = c.db.Commit()
 	if err != nil {
+		global.LOG.Error("Commit", zap.Error(err))
 		return err
 	}
 	err = db.Close()
 	if err != nil {
+		global.LOG.Error("Close", zap.Error(err))
 		return err
 	}
 	global.LOG.Info(c.Info.Domain + " end")
