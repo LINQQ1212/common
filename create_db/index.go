@@ -158,10 +158,12 @@ func (c *Create) Start() error {
 	//db, err := badger.Open(badger.DefaultOptions(path.Join(global.VersionDir, "~"+c.domain)).WithLoggingLevel(badger.ERROR))
 	//db, err := storm.Open(path.Join(global.VersionDir, "~"+c.domain+".db"), storm.Codec(protobuf.Codec))
 	if err != nil {
+		global.LOG.Error("Open bbolt db", zap.Error(err))
 		return err
 	}
 	err = c.CreateBucketIfNotExists(db)
 	if err != nil {
+		global.LOG.Error("CreateBucketIfNotExists", zap.Error(err))
 		return err
 	}
 
@@ -203,6 +205,7 @@ func (c *Create) Start() error {
 
 	f, err := os.Open(c.Info.ProductTarLink)
 	if err != nil {
+		global.LOG.Error("Open："+c.Info.ProductTarLink, zap.Error(err))
 		return err
 	}
 	defer f.Close()
@@ -237,7 +240,7 @@ func (c *Create) Start() error {
 	if err != nil {
 		return err
 	}*/
-
+	global.LOG.Info(c.Info.Domain + "product end")
 	vinfo := models.VersionInfo{
 		Name:     c.Info.Domain,
 		FileName: strings.TrimSuffix(filepath.Base(c.Info.ProductTarLink), ".tar.gz"),
