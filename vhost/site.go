@@ -1,6 +1,7 @@
 package vhost
 
 import (
+	"github.com/LINQQ1212/common/global"
 	"github.com/jxskiss/base62"
 	"math/rand"
 	"net/url"
@@ -90,8 +91,7 @@ func (s *Site) BuildProUriTPath(host, f, tpName string, id uint64) string {
 
 func GetSuffix() string {
 	//arr := []string{"", ".html", ".shtml", ".jsp", ".asp", ".htm"}
-	arr := []string{"", ".html", ".shtml", ".htm"}
-	return arr[rand.Int()%4]
+	return global.Suffixs[rand.Int()%len(global.Suffixs)]
 }
 func GetSearch() string {
 	arr := []string{"q", "query", "s", "keys", "search"}
