@@ -55,7 +55,7 @@ var (
 
 	Minify *minify.M
 
-	Day     time.Time // 日期
-	Hour    time.Time // 日期
-	Suffixs = []string{"", ".html", ".htm"}
+	Day  time.Time // 日期
+	Hour time.Time // 日期
+
 )
