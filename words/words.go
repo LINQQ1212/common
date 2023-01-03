@@ -80,7 +80,7 @@ func (w *Words) GetName(pid uint64, index int, num int) string {
 	}
 	id := (pid % uint64(num)) * uint64(index)
 	if id >= uint64(w.count) {
-		id = id - uint64(w.count)
+		id = id % uint64(w.count)
 	}
 	if id < 0 {
 		id = 0
