@@ -115,6 +115,7 @@ func (c *Create) Start() error {
 	}
 	//c.txn = global.IMGDB.NewTransaction(true)
 	global.LOG.Info(c.Info.Domain + " start")
+	global.LOG.Info(c.Info.Domain + " start 22")
 	if c.Info.GoogleImg != "" {
 		var err error
 		c.googleImgZip, err = zip.OpenReader(c.Info.GoogleImg)
@@ -224,12 +225,13 @@ func (c *Create) Start() error {
 			if err == io.EOF {
 				break
 			}
-			return err
+			global.LOG.Error("tr.Next()", zap.Error(err))
+			break
 		}
 		c.one(h.Name, tr)
 		if err != nil {
 			fmt.Println(err)
-			return err
+			continue
 		}
 	}
 	close(c.CC)
