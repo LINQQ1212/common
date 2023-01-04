@@ -115,7 +115,6 @@ func (c *Create) Start() error {
 	}
 	//c.txn = global.IMGDB.NewTransaction(true)
 	global.LOG.Info(c.Info.Domain + " start")
-	global.LOG.Info(c.Info.Domain + " start 22")
 	if c.Info.GoogleImg != "" {
 		var err error
 		c.googleImgZip, err = zip.OpenReader(c.Info.GoogleImg)
