@@ -355,9 +355,7 @@ func (c *Create) getCateId(cates string, DomainID uint64) (*models.Cate, error) 
 		var cate2 *models.Cate
 		cate3, ok := c.cates.Load(names)
 		if !ok {
-
 			cate2 = &models.Cate{}
-
 			arr2 := strings.Split(s, ":")
 			name := strings.TrimSpace(arr2[0])
 			if len(arr2) > 1 {
@@ -374,7 +372,7 @@ func (c *Create) getCateId(cates string, DomainID uint64) (*models.Cate, error) 
 		pid = cate2.ID
 		cate = cate2
 	}
-	c.cateInfo.Store(names, cate)
+	c.cateInfo.Store(cates+",", cate)
 	return cate, nil
 }
 
@@ -513,6 +511,9 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 	cate, err := c.getCateId(strings.TrimSpace(arr[0]), domainId)
 	if err == nil {
 		p.CateId = cate.ID
+		if cate.Products == nil {
+			cate.Products = []uint64{}
+		}
 		cate.Products = append(cate.Products, p.ID)
 	}
 
