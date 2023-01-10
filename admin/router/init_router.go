@@ -23,9 +23,6 @@ func InitRouter(r *gin.Engine) {
 		a.GET("/new-domain", apis.Admin)
 		a.GET("/login", apis.Admin)
 	}
-	a.GET("/new-version", apis.Admin)
-	a.GET("/new-domain", apis.Admin)
-	r.GET("/login", apis.Admin)
 	r.NoRoute(func(c *gin.Context) {
 		c.Writer.WriteString("404")
 		c.Status(http.StatusNotFound)
@@ -36,6 +33,7 @@ func InitRouter(r *gin.Engine) {
 	admin := r.Group("/h6hb7860q2/api", middleware.JWTAuth())
 	{
 		admin.GET("menus", apis.Menus)
+		admin.GET("versionInfo", apis.VersionInfo)
 		admin.POST("/new/version", apis.NewVersion)
 		admin.POST("/new/domain", apis.NewDomain)
 	}

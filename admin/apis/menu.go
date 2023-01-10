@@ -22,7 +22,7 @@ func Menus(c *gin.Context) {
 			Key:   "new-version",
 			Title: "新版本",
 			Path:  "/new-version",
-			Order: 1,
+			Order: 900,
 		},
 		{
 			Id:    2,
@@ -38,7 +38,7 @@ func Menus(c *gin.Context) {
 			Id:    i,
 			Key:   v.Info.Name,
 			Title: v.Info.Name,
-			Path:  "/",
+			Path:  "/info?v=" + v.Info.Name,
 			Order: i + 3,
 		})
 		i++
