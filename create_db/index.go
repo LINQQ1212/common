@@ -626,6 +626,11 @@ func init() {
 }
 
 func GetKeys(txt string) (data []string) {
+	defer func() {
+		if err := recover(); err != nil {
+			global.LOG.Error("GetKeys", zap.Any("recover", err))
+		}
+	}()
 	tr := textrank.NewTextRank()
 	// Add text.
 	tr.Populate(txt, language, rule)
