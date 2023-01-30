@@ -5,9 +5,11 @@ go 1.19
 require (
 	github.com/CloudyKit/jet/v6 v6.2.0
 	github.com/DavidBelicza/TextRank/v2 v2.1.3
+	github.com/brotherpowers/ipsubnet v0.0.0-20170914094241-30bc98f0a5b1
 	github.com/chenjiandongx/ginprom v0.0.0-20210617023641-6c809602c38a
 	github.com/cornelk/hashmap v1.0.8
 	github.com/dgraph-io/badger/v3 v3.2103.5
+	github.com/dspinhirne/netaddr-go v0.0.0-20211008142535-a4c5bccad224
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/fvbock/endless v0.0.0-20170109170031-447134032cb6
 	github.com/gin-gonic/gin v1.8.1
