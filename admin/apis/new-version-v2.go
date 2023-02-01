@@ -30,7 +30,7 @@ func NewVersionV2(c *gin.Context) {
 		response.FailWithMessage("产品tar链接异常，为空", c)
 		return
 	}
-
+	go NewVersionV2Start(req, dir)
 	response.OkWithMessage("后台执行中", c)
 }
 
