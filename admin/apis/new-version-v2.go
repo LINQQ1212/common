@@ -38,7 +38,7 @@ func NewVersionV2Start(req models.NewVersionReqV2, dir string) {
 	pdir := path.Join(req.TopDir, dir)
 	if req.RemoteCopy {
 		config := &ssh.ClientConfig{
-			Timeout:         10 * time.Second, //ssh 连接time out 时间一秒钟, 如果ssh验证错误 会在一秒内返回
+			Timeout:         time.Second, //ssh 连接time out 时间一秒钟, 如果ssh验证错误 会在一秒内返回
 			User:            req.RemoteUser,
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(), //这个可以, 但是不够安全
 			Auth:            []ssh.AuthMethod{ssh.Password(req.RemotePwd)},
@@ -53,35 +53,11 @@ func NewVersionV2Start(req models.NewVersionReqV2, dir string) {
 			os.Remove(pdir)
 		}
 		os.MkdirAll(pdir, os.ModeDir)
-		_, err = scp.CopyFrom(sshClient, pdir+"/*.tar.gz", pdir)
-		if err != nil {
-			sendTgMessage(req.Domain + "\nIP:" + req.RemoteHost + "\n" + "复制远程 tar.gz 文件错误：" + err.Error())
+		_, err = scp.CopyFrom(sshClient, pdir, pdir)
+		if err == nil {
+			sendTgMessage(req.Domain + "\nIP:" + req.RemoteHost + "\n" + "复制远程文件错误：" + err.Error())
 			return
 		}
-		err = copyZip(sshClient, pdir, "gok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 Google图片")
-		if err != nil && !req.GErrorSkip {
-			global.LOG.Error("Copy Google图片", zap.Error(err))
-			return
-		}
-
-		err = copyZip(sshClient, pdir, "yok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 雅虎描述")
-		if err != nil && !req.YErrorSkip {
-			global.LOG.Error("Copy 雅虎描述", zap.Error(err))
-			return
-		}
-
-		err = copyZip(sshClient, pdir, "bok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 Bing描述")
-		if err != nil && !req.BErrorSkip {
-			global.LOG.Error("Copy Bing描述", zap.Error(err))
-			return
-		}
-
-		err = copyZip(sshClient, pdir, "ytok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 Youtube")
-		if err != nil && !req.YtErrorSkip {
-			global.LOG.Error("Copy Youtube", zap.Error(err))
-			return
-		}
-
 		sshClient.Close()
 	}
 	if strings.HasPrefix(req.ProductTarLink, "http") {
@@ -145,17 +121,6 @@ func NewVersionV2Start(req models.NewVersionReqV2, dir string) {
 		defer session.Close()
 		session.Run("rm " + pdir)
 	}
-}
-
-func copyZip(sshClient *ssh.Client, dir, dir2, mess string) error {
-	ndir := path.Join(dir, dir2)
-	os.MkdirAll(ndir, os.ModeDir)
-	_, err := scp.CopyFrom(sshClient, ndir+"/*.zip", ndir)
-	if err != nil {
-		sendTgMessage(mess + "\n错误：" + err.Error())
-		return err
-	}
-	return nil
 }
 
 func getZipFile(topDir, dir, fname string, skip bool) string {
