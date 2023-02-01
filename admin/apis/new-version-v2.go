@@ -59,25 +59,25 @@ func NewVersionV2Start(req models.NewVersionReqV2, dir string) {
 			return
 		}
 		err = copyZip(sshClient, pdir, "gok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 Google图片")
-		if err != nil {
+		if err != nil && !req.GErrorSkip {
 			global.LOG.Error("Copy Google图片", zap.Error(err))
 			return
 		}
 
 		err = copyZip(sshClient, pdir, "yok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 雅虎描述")
-		if err != nil {
+		if err != nil && !req.YErrorSkip {
 			global.LOG.Error("Copy 雅虎描述", zap.Error(err))
 			return
 		}
 
 		err = copyZip(sshClient, pdir, "bok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 Bing描述")
-		if err != nil {
+		if err != nil && !req.BErrorSkip {
 			global.LOG.Error("Copy Bing描述", zap.Error(err))
 			return
 		}
 
 		err = copyZip(sshClient, pdir, "ytok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 Youtube")
-		if err != nil {
+		if err != nil && !req.YtErrorSkip {
 			global.LOG.Error("Copy Youtube", zap.Error(err))
 			return
 		}
