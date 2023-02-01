@@ -1,4 +1,4 @@
-package create_db
+package create_db_v2
 
 import (
 	"archive/tar"
@@ -37,7 +37,7 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-func New(req models.NewVersionReq) *Create {
+func New(req models.NewVersionReqV2) *Create {
 	return &Create{
 		Info:       req,
 		domainInfo: &sync.Map{},
@@ -51,7 +51,7 @@ func New(req models.NewVersionReq) *Create {
 }
 
 type Create struct {
-	Info       models.NewVersionReq
+	Info       models.NewVersionReqV2
 	domainInfo *sync.Map //map[string]uint64{}
 	cateInfo   *sync.Map //map[string]*models.Cate
 	cates      *sync.Map //map[string]*models.Cate
@@ -108,7 +108,7 @@ func (c *Create) Start() error {
 	if c.Info.DownMainPic {
 		conn, err := grpc.Dial(global.CONFIG.System.ImageGrcp, grpc.WithInsecure(), grpc.WithBlock())
 		if err != nil {
-			return err
+			return errors.New("下载主图 Grcp 链接错误：" + global.CONFIG.System.ImageGrcp + err.Error())
 		}
 		defer conn.Close()
 		c.conn2 = pb.NewGreeterClient(conn)
@@ -118,9 +118,9 @@ func (c *Create) Start() error {
 	if c.Info.GoogleImg != "" {
 		var err error
 		c.googleImgZip, err = zip.OpenReader(c.Info.GoogleImg)
-		if err != nil {
+		if err != nil && !c.Info.GErrorSkip {
 			global.LOG.Error("GoogleImg", zap.Error(err))
-			return err
+			return errors.New("GoogleImg 错误：" + err.Error())
 		}
 		defer c.googleImgZip.Close()
 	}
@@ -128,9 +128,9 @@ func (c *Create) Start() error {
 	if c.Info.YahooDsc != "" {
 		var err error
 		c.yahooDscZip, err = zip.OpenReader(c.Info.YahooDsc)
-		if err != nil {
+		if err != nil && !c.Info.YErrorSkip {
 			global.LOG.Error("YahooDsc", zap.Error(err))
-			return err
+			return errors.New("YahooDsc 错误：" + err.Error())
 		}
 		defer c.yahooDscZip.Close()
 	}
@@ -138,18 +138,18 @@ func (c *Create) Start() error {
 	if c.Info.BingDsc != "" {
 		var err error
 		c.bingDscZip, err = zip.OpenReader(c.Info.BingDsc)
-		if err != nil {
+		if err != nil && !c.Info.BErrorSkip {
 			global.LOG.Error("BingDsc", zap.Error(err))
-			return err
+			return errors.New("BingDsc 错误：" + err.Error())
 		}
 		defer c.bingDscZip.Close()
 	}
 	if c.Info.YoutubeDsc != "" {
 		var err error
 		c.youtobeDscZip, err = zip.OpenReader(c.Info.YoutubeDsc)
-		if err != nil {
+		if err != nil && !c.Info.YtErrorSkip {
 			global.LOG.Error("YoutubeDsc", zap.Error(err))
-			return err
+			return errors.New("YoutubeDsc 错误：" + err.Error())
 		}
 		defer c.youtobeDscZip.Close()
 	}
@@ -159,12 +159,13 @@ func (c *Create) Start() error {
 	//db, err := storm.Open(path.Join(global.VersionDir, "~"+c.domain+".db"), storm.Codec(protobuf.Codec))
 	if err != nil {
 		global.LOG.Error("Open bbolt db", zap.Error(err))
-		return err
+		return errors.New("创建数据库文件错误：" + err.Error())
 	}
 	err = c.CreateBucketIfNotExists(db)
 	if err != nil {
 		global.LOG.Error("CreateBucketIfNotExists", zap.Error(err))
-		return err
+		return errors.New("创建数据库内容错误：" + err.Error())
+
 	}
 
 	go func() {
@@ -206,13 +207,13 @@ func (c *Create) Start() error {
 	f, err := os.Open(c.Info.ProductTarLink)
 	if err != nil {
 		global.LOG.Error("Open："+c.Info.ProductTarLink, zap.Error(err))
-		return err
+		return errors.New("打开 " + c.Info.ProductTarLink + ":" + err.Error())
 	}
 	defer f.Close()
 	gr, err := gzip.NewReader(f)
 	if err != nil {
 		global.LOG.Error("gzip.NewReader", zap.Error(err))
-		return err
+		return errors.New("gzip 读取 " + c.Info.ProductTarLink + ":" + err.Error())
 	}
 	defer gr.Close()
 	tr := tar.NewReader(gr)
@@ -252,37 +253,37 @@ func (c *Create) Start() error {
 	c.db, err = db.Begin(true)
 	if err != nil {
 		global.LOG.Error("Begin", zap.Error(err))
-		return err
+		return errors.New("Begin :" + err.Error())
 	}
 	vb, err := proto.Marshal(&vinfo)
 	if err != nil {
 		global.LOG.Error("vinfo", zap.Error(err))
-		return err
+		return errors.New("vinfo :" + err.Error())
 	}
 	err = c.db.Bucket(models.BInfo).Put(models.BInfo, vb)
 	if err != nil {
 		global.LOG.Error("BInfo", zap.Error(err))
-		return err
+		return errors.New("BInfo :" + err.Error())
 	}
 	err = c.db.Bucket(models.BCate).Put(models.BCate, c.GetCateByte())
 	if err != nil {
 		global.LOG.Error("BCate", zap.Error(err))
-		return err
+		return errors.New("BCate :" + err.Error())
 	}
 	err = c.db.Bucket(models.BDomain).Put(models.BDomain, c.GetDomainByte())
 	if err != nil {
 		global.LOG.Error("BDomain", zap.Error(err))
-		return err
+		return errors.New("BDomain :" + err.Error())
 	}
 	err = c.db.Commit()
 	if err != nil {
 		global.LOG.Error("Commit", zap.Error(err))
-		return err
+		return errors.New("Commit :" + err.Error())
 	}
 	err = db.Close()
 	if err != nil {
 		global.LOG.Error("Close", zap.Error(err))
-		return err
+		return errors.New("Close :" + err.Error())
 	}
 	global.LOG.Info(c.Info.Domain + " end")
 	runtime.GC()

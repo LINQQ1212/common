@@ -8,4 +8,7 @@ type System struct {
 	PassWord  string `mapstructure:"password" json:"password" yaml:"password"`
 	MainDir   string `mapstructure:"main-dir" json:"main-dir" yaml:"main-dir"`
 	ImageGrcp string `mapstructure:"image-grcp" json:"image-grcp" yaml:"image-grcp"`
+	TGToken   string `mapstructure:"tg-token" json:"tg-token" yaml:"tg-token"`
+	TGChatId  string `mapstructure:"tg-chat-id" json:"tg-chat-id" yaml:"tg-chat-id"`
+	Info      string `mapstructure:"info" json:"info" yaml:"info"`
 }

@@ -38,6 +38,32 @@ type NewVersionReq struct {
 	YoutubeDsc     string `json:"youtube_dsc"`
 }
 
+type NewVersionReqV2 struct {
+	Domain         string `json:"domain"`
+	TopDir         string `json:"top_dir"`
+	ProductTarLink string `json:"product_tar_link"`
+
+	RemoteCopy      bool   `json:"remote_copy"` // 是否远程复制
+	RemoteHost      string `json:"remote_host"`
+	RemotePort      string `json:"remote_port"`
+	RemoteUser      string `json:"remote_user"`
+	RemotePwd       string `json:"remote_pwd"`
+	RemoteEndRemove bool   `json:"remote_end_remove"` // 结束同时删除远程服务器的文件
+
+	AutoFilePath bool   `json:"auto_file_path"`
+	GoogleImg    string `json:"google_img"`
+	YahooDsc     string `json:"yahoo_dsc"`
+	BingDsc      string `json:"bing_dsc"`
+	YoutubeDsc   string `json:"youtube_dsc"`
+	GErrorSkip   bool   `json:"g_error_skip"`
+	YErrorSkip   bool   `json:"y_error_skip"`
+	BErrorSkip   bool   `json:"b_error_skip"`
+	YtErrorSkip  bool   `json:"yt_error_skip"`
+
+	EndRemove   bool `json:"end_remove"`
+	DownMainPic bool `json:"down_main_pic"`
+}
+
 type Version struct {
 	DB            *bbolt.DB
 	Info          *VersionInfo

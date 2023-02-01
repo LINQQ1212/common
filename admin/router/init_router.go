@@ -20,6 +20,7 @@ func InitRouter(r *gin.Engine) {
 	{
 		a.GET("/", apis.Admin)
 		a.GET("/new-version", apis.Admin)
+		a.GET("/new-version-v2", apis.Admin)
 		a.GET("/new-domain", apis.Admin)
 		a.GET("/login", apis.Admin)
 	}
@@ -35,6 +36,7 @@ func InitRouter(r *gin.Engine) {
 		admin.GET("menus", apis.Menus)
 		admin.GET("versionInfo", apis.VersionInfo)
 		admin.POST("/new/version", apis.NewVersion)
+		admin.POST("/new/version/v2", apis.NewVersionV2)
 		admin.POST("/new/domain", apis.NewDomain)
 	}
 }

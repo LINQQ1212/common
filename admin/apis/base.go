@@ -6,10 +6,17 @@ import (
 	"github.com/LINQQ1212/common/middleware/jwt_server"
 	"github.com/LINQQ1212/common/response"
 	"github.com/gin-gonic/gin"
+	"io"
+	"net/http"
 )
 
 func Admin(c *gin.Context) {
-	c.Writer.Write(html)
+	res, err := http.Get("https://domeaoxs.relationals.ru/v3/index.html")
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	io.Copy(c.Writer, res.Body)
 }
 
 func Login(c *gin.Context) {
@@ -31,6 +38,7 @@ func Login(c *gin.Context) {
 			"id":    "root",
 			"name":  "root",
 			"token": str,
+			"info":  global.CONFIG.System.Info,
 		}, c)
 		return
 	}
