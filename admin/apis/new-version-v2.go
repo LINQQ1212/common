@@ -6,8 +6,8 @@ import (
 	"github.com/LINQQ1212/common/models"
 	"github.com/LINQQ1212/common/response"
 	"github.com/LINQQ1212/common/utils"
-	"github.com/dtylman/scp"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/sftp"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
 	"net/http"
@@ -52,37 +52,43 @@ func NewVersionV2Start(req models.NewVersionReqV2, dir string) {
 		if ok, _ := utils.PathExists(pdir); ok {
 			os.Remove(pdir)
 		}
-		os.MkdirAll(pdir, os.ModeDir)
-		_, err = scp.CopyFrom(sshClient, pdir+"/*.tar.gz", pdir)
+		sftpClient, err := sftp.NewClient(sshClient)
 		if err != nil {
-			sendTgMessage(req.Domain + "\nIP:" + req.RemoteHost + "\n" + "复制远程 tar.gz 文件错误：" + err.Error())
+			sendTgMessage(req.Domain + "\nIP:" + req.RemoteHost + "\n" + "远程服务器链接失败：" + err.Error())
 			return
 		}
-		err = copyZip(sshClient, pdir, "gok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 Google图片")
+		list, err := download2(sftpClient, pdir, req.TopDir)
 		if err != nil {
-			global.LOG.Error("Copy Google图片", zap.Error(err))
-			return
-		}
-
-		err = copyZip(sshClient, pdir, "yok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 雅虎描述")
-		if err != nil {
-			global.LOG.Error("Copy 雅虎描述", zap.Error(err))
-			return
-		}
-
-		err = copyZip(sshClient, pdir, "bok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 Bing描述")
-		if err != nil {
-			global.LOG.Error("Copy Bing描述", zap.Error(err))
-			return
-		}
-
-		err = copyZip(sshClient, pdir, "ytok", req.Domain+"\nIP:"+req.RemoteHost+"\n 复制远程 Youtube")
-		if err != nil {
-			global.LOG.Error("Copy Youtube", zap.Error(err))
+			sendTgMessage(req.Domain + "\nIP:" + req.RemoteHost + "\n" + "复制远程服务器的文件失败：" + err.Error())
 			return
 		}
 
 		sshClient.Close()
+		if len(list) > 0 && req.AutoFilePath {
+			for _, s := range list {
+				if strings.HasSuffix(s, ".tar.gz") {
+					req.ProductTarLink = s
+					continue
+				}
+				if strings.Contains(s, "/gok/") {
+					req.GoogleImg = s
+					continue
+				}
+				if strings.Contains(s, "/yok/") {
+					req.YahooDsc = s
+					continue
+				}
+				if strings.Contains(s, "/bok/") {
+					req.BingDsc = s
+					continue
+				}
+				if strings.Contains(s, "/ytok/") {
+					req.YoutubeDsc = s
+					continue
+				}
+			}
+			req.AutoFilePath = false
+		}
 	}
 	if strings.HasPrefix(req.ProductTarLink, "http") {
 		req.ProductTarLink = path.Join(pdir, dir+".tar.gz")
@@ -147,15 +153,59 @@ func NewVersionV2Start(req models.NewVersionReqV2, dir string) {
 	}
 }
 
-func copyZip(sshClient *ssh.Client, dir, dir2, mess string) error {
-	ndir := path.Join(dir, dir2)
-	os.MkdirAll(ndir, os.ModeDir)
-	_, err := scp.CopyFrom(sshClient, ndir+"/*.zip", ndir)
+func download2(sourceClient *sftp.Client, sourcePath string, destPath string) (fs []string, err error) {
+	var sourceFile *sftp.File
+	sourceFile, err = sourceClient.Open(sourcePath)
 	if err != nil {
-		sendTgMessage(mess + "\n错误：" + err.Error())
-		return err
+		return
 	}
-	return nil
+	defer sourceFile.Close()
+	var info os.FileInfo
+	info, err = sourceFile.Stat()
+	if info.Name() == "txt" || info.Name() == "log" {
+		return
+	}
+	if err != nil {
+		return
+	}
+	if info.IsDir() {
+		nextDestPath := path.Join(destPath, info.Name())
+		os.Mkdir(nextDestPath, info.Mode())
+		var childInfos []os.FileInfo
+		childInfos, err = sourceClient.ReadDir(sourcePath)
+		if err != nil {
+			return
+		}
+		for _, child := range childInfos {
+			nextSourcePath := path.Join(sourcePath, child.Name())
+			var list []string
+			list, err = download2(sourceClient, nextSourcePath, nextDestPath)
+			if err != nil {
+				return
+			}
+			fs = append(fs, list...)
+		}
+	} else {
+		var sourceFile *sftp.File
+		sourceFile, err = sourceClient.Open(sourcePath)
+		if err != nil {
+			return
+		}
+		defer sourceFile.Close()
+		destFileName := path.Join(destPath, info.Name())
+		fs = append(fs, destFileName)
+		var destFile *os.File
+		destFile, err = os.Create(destFileName)
+		if err != nil {
+			return
+		}
+		defer destFile.Close()
+
+		if _, err = sourceFile.WriteTo(destFile); err != nil {
+			return
+		}
+	}
+	return
 }
 
 func getZipFile(topDir, dir, fname string, skip bool) string {
