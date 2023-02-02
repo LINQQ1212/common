@@ -33,6 +33,7 @@ func NewVersionV2(c *gin.Context) {
 	go NewVersionV2Start(req, dir)
 	response.OkWithMessage("后台执行中", c)
 }
+
 func NewVersionV2Start(req models.NewVersionReqV2, dir string) {
 	pdir := path.Join(req.TopDir, dir)
 	if req.RemoteCopy {
