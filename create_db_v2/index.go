@@ -118,40 +118,60 @@ func (c *Create) Start() error {
 	if c.Info.GoogleImg != "" {
 		var err error
 		c.googleImgZip, err = zip.OpenReader(c.Info.GoogleImg)
-		if err != nil && !c.Info.GErrorSkip {
-			global.LOG.Error("GoogleImg", zap.Error(err))
-			return errors.New("GoogleImg 错误：" + err.Error())
+		if err != nil {
+			if c.Info.GErrorSkip {
+				c.Info.GoogleImg = ""
+			} else {
+				global.LOG.Error("GoogleImg", zap.Error(err))
+				return errors.New("GoogleImg 错误：" + err.Error())
+			}
+		} else {
+			defer c.googleImgZip.Close()
 		}
-		defer c.googleImgZip.Close()
 	}
 
 	if c.Info.YahooDsc != "" {
 		var err error
 		c.yahooDscZip, err = zip.OpenReader(c.Info.YahooDsc)
-		if err != nil && !c.Info.YErrorSkip {
-			global.LOG.Error("YahooDsc", zap.Error(err))
-			return errors.New("YahooDsc 错误：" + err.Error())
+		if err != nil {
+			if c.Info.YErrorSkip {
+				c.Info.YahooDsc = ""
+			} else {
+				global.LOG.Error("YahooDsc", zap.Error(err))
+				return errors.New("YahooDsc 错误：" + err.Error())
+			}
+		} else {
+			defer c.yahooDscZip.Close()
 		}
-		defer c.yahooDscZip.Close()
 	}
 
 	if c.Info.BingDsc != "" {
 		var err error
 		c.bingDscZip, err = zip.OpenReader(c.Info.BingDsc)
-		if err != nil && !c.Info.BErrorSkip {
-			global.LOG.Error("BingDsc", zap.Error(err))
-			return errors.New("BingDsc 错误：" + err.Error())
+		if err != nil {
+			if c.Info.BErrorSkip {
+				c.Info.BingDsc = ""
+			} else {
+				global.LOG.Error("BingDsc", zap.Error(err))
+				return errors.New("BingDsc 错误：" + err.Error())
+			}
+		} else {
+			defer c.bingDscZip.Close()
 		}
-		defer c.bingDscZip.Close()
 	}
 	if c.Info.YoutubeDsc != "" {
 		var err error
 		c.youtobeDscZip, err = zip.OpenReader(c.Info.YoutubeDsc)
-		if err != nil && !c.Info.YtErrorSkip {
-			global.LOG.Error("YoutubeDsc", zap.Error(err))
-			return errors.New("YoutubeDsc 错误：" + err.Error())
+		if err != nil {
+			if c.Info.YtErrorSkip {
+				c.Info.YoutubeDsc = ""
+			} else {
+				global.LOG.Error("YoutubeDsc", zap.Error(err))
+				return errors.New("YoutubeDsc 错误：" + err.Error())
+			}
+		} else {
+			defer c.youtobeDscZip.Close()
 		}
-		defer c.youtobeDscZip.Close()
 	}
 
 	db, err := bbolt.Open(path.Join(global.VersionDir, "~"+c.Info.Domain+".db"), 0666, bbolt.DefaultOptions)
@@ -165,7 +185,6 @@ func (c *Create) Start() error {
 	if err != nil {
 		global.LOG.Error("CreateBucketIfNotExists", zap.Error(err))
 		return errors.New("创建数据库内容错误：" + err.Error())
-
 	}
 
 	go func() {
@@ -200,7 +219,6 @@ func (c *Create) Start() error {
 				return
 			}
 		}
-
 		c.done <- struct{}{}
 	}()
 
@@ -287,8 +305,7 @@ func (c *Create) Start() error {
 	}
 	global.LOG.Info(c.Info.Domain + " end")
 	runtime.GC()
-	os.Rename(path.Join(global.VersionDir, "~"+c.Info.Domain+".db"), path.Join(global.VersionDir, c.Info.Domain+".db"))
-	return nil
+	return os.Rename(path.Join(global.VersionDir, "~"+c.Info.Domain+".db"), path.Join(global.VersionDir, c.Info.Domain+".db"))
 }
 
 func (c *Create) GetDomain() string {
