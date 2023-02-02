@@ -94,7 +94,7 @@ func NewVersionV2Start(req models.NewVersionReqV2, dir string) {
 		req.ProductTarLink = path.Join(pdir, dir+".tar.gz")
 	}
 
-	if utils.FileExist(req.ProductTarLink) {
+	if !utils.FileExist(req.ProductTarLink) {
 		sendTgMessage(req.Domain + "\n" + req.ProductTarLink + " 文件不存在")
 		return
 	}
