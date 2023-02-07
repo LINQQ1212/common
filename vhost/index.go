@@ -47,7 +47,6 @@ func (v *V) Reload() {
 		fs, err := filepath.Glob(path.Join(v.dir, "vhost", version, "/*.yaml"))
 		if err != nil {
 			panic(err)
-			continue
 		}
 
 		v.list.Set(version, hashmap.New[string, *Site]())
@@ -56,7 +55,6 @@ func (v *V) Reload() {
 			err = utils.ReadYamlConfig(f, s)
 			if err != nil {
 				panic(err)
-				continue
 			}
 			s.InitTableMap()
 			domain := strings.TrimSuffix(filepath.Base(f), ".yaml")
@@ -103,7 +101,26 @@ func (v *V) GetOrNew(version, domain, f string) (*Site, error) {
 	s, ok := l.Get(domain)
 	if !ok {
 		var err error
-		s, err = v.NewSite(version, domain, f)
+		s, err = v.NewSite(version, domain, f, true)
+		if err != nil {
+			return nil, err
+		}
+		s.Index = l.Len() + 1
+		l.Set(domain, s)
+		err = utils.SaveYamlConfig(path.Join(v.dir, "vhost", version, domain+".yaml"), s)
+		return s, err
+	}
+	return s, nil
+}
+func (v *V) GetOrNewNotTemplate(version, domain, f string) (*Site, error) {
+	l, ok := v.list.Get(version)
+	if !ok {
+		return nil, errors.New("404")
+	}
+	s, ok := l.Get(domain)
+	if !ok {
+		var err error
+		s, err = v.NewSite(version, domain, f, false)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +135,7 @@ func (v *V) GetOrNew(version, domain, f string) (*Site, error) {
 var ErrTemplateArticleNil = errors.New("not has template")
 var ErrTemplateListNil = errors.New("not has list template")
 
-func (v *V) NewSite(version, domain, f string) (*Site, error) {
+func (v *V) NewSite(version, domain, f string, t bool) (*Site, error) {
 	s := &Site{}
 	s.Domain = domain
 	s.Index = -1
@@ -143,7 +160,9 @@ func (v *V) NewSite(version, domain, f string) (*Site, error) {
 	if err != nil {
 		return s, err
 	}
-	err = v.getViews(s, tempDir)
+	if t {
+		err = v.getViews(s, tempDir)
+	}
 	return s, err
 }
 
