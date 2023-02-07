@@ -155,15 +155,17 @@ func (v *V) NewSite(version, domain, f string, t bool) (*Site, error) {
 	if rand.Float64() > 0.5 {
 		s.Type = 2
 	}
-	tempDir := path.Join(v.dir, "views", version, s.Domain)
-	err := utils.CreateDir(tempDir)
-	if err != nil {
+	if t {
+		var err error
+		tempDir := path.Join(v.dir, "views", version, s.Domain)
+		err = utils.CreateDir(tempDir)
+		if err != nil {
+			return s, err
+		}
+		err = v.getViews(s, tempDir)
 		return s, err
 	}
-	if t {
-		err = v.getViews(s, tempDir)
-	}
-	return s, err
+	return s, nil
 }
 
 func (v *V) getViews(s *Site, dir string) error {
