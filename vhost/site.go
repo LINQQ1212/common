@@ -205,3 +205,22 @@ func (s *Site) Base32ToIdIsMy(str string) (uint64, bool) {
 	}
 	return s.Str2Id(str), false
 }
+
+func (s *Site) IdToRandStr(id uint64) string {
+	var b []byte
+	cache := id
+	v := false
+	for i := 0; i < 10; i++ {
+		if v {
+			break
+		}
+		if idx := int(cache & 63); idx < len(s.Table) {
+			if idx == 0 {
+				v = true
+			}
+			b = append(b, s.Table[idx])
+			cache >>= 6
+		}
+	}
+	return *(*string)(unsafe.Pointer(&b))
+}
