@@ -2,10 +2,20 @@ package utils
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"github.com/samber/lo"
 	"math/rand"
 	"strings"
 )
+
+// StrMd5 str to md5
+func StrMd5(s string) string {
+	h := md5.New()
+	h.Write([]byte(s))
+	rs := hex.EncodeToString(h.Sum(nil))
+	return rs
+}
 
 func RandInt(min, max int) int {
 	if min >= max || min == 0 && max == 0 {
