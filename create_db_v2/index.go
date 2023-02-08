@@ -13,6 +13,7 @@ import (
 	"github.com/DavidBelicza/TextRank/v2/rank"
 	"github.com/samber/lo"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"regexp"
 	"runtime"
 
@@ -266,6 +267,7 @@ func (c *Create) Start() error {
 		FileName: strings.TrimSuffix(filepath.Base(c.Info.ProductTarLink), ".tar.gz"),
 		Count:    c.pId,
 		DownPic:  c.Info.DownMainPic,
+		CreateAt: timestamppb.Now(),
 	}
 
 	c.db, err = db.Begin(true)
@@ -485,13 +487,13 @@ func (c *Create) handleOneRow(domain []byte, line []byte) error {
 		DomainID: domainId,
 		Image:    mainImg,
 		Name:     arr[7],
+		Price:    arr[5],
+		Specials: arr[6],
 	}
 	pi := &models.ProductInfo{
 		Pid:          arr[2], //
 		Model:        arr[3],
 		Images:       imgArr,
-		Price:        arr[5],
-		Specials:     arr[6],
 		Description:  arr[8],
 		MTitle:       arr[9],
 		MKeywords:    arr[10],

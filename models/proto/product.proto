@@ -35,8 +35,10 @@ message Product {
   string   Name = 3;
   string   Image = 4;
   uint64   DomainID = 5;
-  string Brand = 6;
-  repeated string Keywords = 7;
+  string   Brand = 6;
+  string   Price = 7;
+  string   Specials = 8;
+  repeated string Keywords = 9;
   string Link = 10;
 }
 
@@ -45,15 +47,13 @@ message ProductInfo {
   string   Pid = 1;
   string   Model = 2;
   repeated string Images = 3;
-  string   Price = 4;
-  string   Specials = 5;
-  string   Description = 6;
-  string   MTitle = 7;
-  string   MKeywords = 8;
-  string   MDescription = 9;
-  repeated GImg GoogleImgs = 10;
-  repeated YahooDsc YahooDesc = 11;
-  repeated YahooDsc BingDesc = 12;
-  repeated GImg Youtube = 13;
-  repeated string Categories = 14;
+  string   Description = 4;
+  string   MTitle = 5;
+  string   MKeywords = 6;
+  string   MDescription = 7;
+  repeated GImg GoogleImgs = 8;
+  repeated YahooDsc YahooDesc = 9;
+  repeated YahooDsc BingDesc = 10;
+  repeated GImg Youtube = 11;
+  repeated string Categories = 12;
 }
